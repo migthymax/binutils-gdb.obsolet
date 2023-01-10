@@ -4,6 +4,8 @@
 *.orig
 *.rej
 
+cross-build/
+
 *~
 .#*
 *#
