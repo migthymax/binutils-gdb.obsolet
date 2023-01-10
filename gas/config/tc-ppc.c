@@ -1547,14 +1547,18 @@ ppc_target_format (void)
 #endif
 #endif
 #ifdef OBJ_ELF
-# ifdef TE_FreeBSD
-  return (ppc_obj64 ? "elf64-powerpc-freebsd" : "elf32-powerpc-freebsd");
-# elif defined (TE_VXWORKS)
-  return "elf32-powerpc-vxworks";
+# if TE_AMIGAOS
+  return "elf32-amigaos";
 # else
+#  ifdef TE_FreeBSD
+  return (ppc_obj64 ? "elf64-powerpc-freebsd" : "elf32-powerpc-freebsd");
+#  elif defined (TE_VXWORKS)
+  return "elf32-powerpc-vxworks";
+#  else
   return (target_big_endian
 	  ? (ppc_obj64 ? "elf64-powerpc" : "elf32-powerpc")
 	  : (ppc_obj64 ? "elf64-powerpcle" : "elf32-powerpcle"));
+#  endif
 # endif
 #endif
 }
@@ -2111,6 +2115,10 @@ ppc_elf_suffix (char **str_p, expressionS *exp_p)
 #define MAP64(str, reloc) { str, sizeof (str) - 1, 0, 1, reloc }
 
   static const struct map_bfd mapping[] = {
+    MAP ("brel",		BFD_RELOC_PPC_AMIGAOS_BREL),
+    MAP ("brel@l",		BFD_RELOC_PPC_AMIGAOS_BREL_LO),
+    MAP ("brel@h",		BFD_RELOC_PPC_AMIGAOS_BREL_HI),
+    MAP ("brel@ha",		BFD_RELOC_PPC_AMIGAOS_BREL_HA),	
     MAP ("l",			BFD_RELOC_LO16),
     MAP ("h",			BFD_RELOC_HI16),
     MAP ("ha",			BFD_RELOC_HI16_S),
@@ -7507,6 +7515,14 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg)
 	  break;
 
 #ifdef OBJ_ELF
+	case BFD_RELOC_PPC_AMIGAOS_BREL:
+	case BFD_RELOC_PPC_AMIGAOS_BREL_HI:
+	case BFD_RELOC_PPC_AMIGAOS_BREL_LO:
+	case BFD_RELOC_PPC_AMIGAOS_BREL_HA:
+	  md_number_to_chars (fixP->fx_frag->fr_literal + fixP->fx_where,
+			      value, 2);
+	  break;
+
 	  /* These can appear with @l etc. in data.  */
 	case BFD_RELOC_LO16:
 	case BFD_RELOC_LO16_PCREL:

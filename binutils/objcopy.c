@@ -122,6 +122,9 @@ enum strip_action
 /* Which symbols to remove.  */
 static enum strip_action strip_symbols = STRIP_UNDEF;
 
+/* Shall we strip unneeded relative relocs? */
+static int strip_unneeded_rel_relocs;
+
 enum locals_action
 {
   LOCALS_UNDEF,
@@ -366,6 +369,7 @@ enum command_line_switch
   OPTION_SREC_LEN,
   OPTION_STACK,
   OPTION_STRIP_DWO,
+  OPTION_STRIP_UNNEEED_REL_RELOCS,
   OPTION_STRIP_SYMBOLS,
   OPTION_STRIP_UNNEEDED,
   OPTION_STRIP_UNNEEDED_SYMBOL,
@@ -409,6 +413,7 @@ static struct option strip_options[] =
   {"strip-dwo", no_argument, 0, OPTION_STRIP_DWO},
   {"strip-symbol", required_argument, 0, 'N'},
   {"strip-unneeded", no_argument, 0, OPTION_STRIP_UNNEEDED},
+  {"strip-unneeded-rel-relocs", no_argument, 0, OPTION_STRIP_UNNEEED_REL_RELOCS},
   {"target", required_argument, 0, 'F'},
   {"verbose", no_argument, 0, 'v'},
   {"version", no_argument, 0, 'V'},
@@ -1562,6 +1567,11 @@ filter_symbols (bfd *abfd, bfd *obfd, asymbol **osyms,
 
       undefined = bfd_is_und_section (bfd_asymbol_section (sym));
 
+	  if (strip_symbols == STRIP_ALL && undefined)
+        {
+          add_specific_symbol(name, keep_specific_htab);
+        }
+
       if (add_sym_list)
 	{
 	  struct addsym_node *ptr;
@@ -1647,7 +1657,10 @@ filter_symbols (bfd *abfd, bfd *obfd, asymbol **osyms,
 	}
 
       if (strip_symbols == STRIP_ALL)
-	keep = false;
+		if (strcmp(name, "_start") == 0 || strcmp(name, "__amigaos4__") == 0 || strcmp(name, "_SDA_BASE_") == 0)
+          keep = true;
+        else
+          keep = false;
       else if ((flags & BSF_KEEP) != 0		/* Used in relocation.  */
 	       || ((flags & BSF_SECTION_SYM) != 0
 		   && ((*bfd_asymbol_section (sym)->symbol_ptr_ptr)->flags
@@ -1709,7 +1722,17 @@ filter_symbols (bfd *abfd, bfd *obfd, asymbol **osyms,
 	keep = true;
 
       if (keep && is_strip_section (abfd, bfd_asymbol_section (sym)))
-	keep = false;
+	{
+          /* If the symbol refers to a stripped section, we still want to
+           * keep it, e.g., _SDA_BASE_ TODO: We should perhaps output a
+           * warning or add another option to trigger this behaviour.
+           * FIXME: The section to which symbol refers must be adjusted
+           * as well */
+          if (!is_specified_symbol (name, keep_specific_htab))
+            {
+              keep = false;
+            }
+	}
 
       if (keep)
 	{
@@ -3291,6 +3314,7 @@ copy_object (bfd *ibfd, bfd *obfd, const bfd_arch_info_type *input_arch)
 	 haven't been set yet.  mark_symbols_used_in_relocations will
 	 ignore input sections which have no corresponding output
 	 section.  */
+	 // ML: TODO: Really needef for maiga to remove the floowing  fi???
       if (strip_symbols != STRIP_ALL)
 	{
 	  bfd_set_error (bfd_error_no_error);
@@ -4379,7 +4403,9 @@ copy_relocations_in_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
 	    }
 	}
 
-      if (strip_symbols == STRIP_ALL)
+    /* Never, ever, strip reloc data on the Amiga! */
+    if (strip_symbols == STRIP_ALL &&
+	  bfd_get_flavour(obfd) != bfd_target_amiga_flavour)
 	{
 	  /* Remove relocations which are not in
 	     keep_strip_specific_list.  */
@@ -4390,10 +4416,28 @@ copy_relocations_in_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
 	    /* PR 17512: file: 9e907e0c.  */
 	    if (relpp[i]->sym_ptr_ptr
 		/* PR 20096 */
-		&& *relpp[i]->sym_ptr_ptr
-		&& is_specified_symbol (bfd_asymbol_name (*relpp[i]->sym_ptr_ptr),
+		&& *relpp[i]->sym_ptr_ptr )
+		if( is_specified_symbol (bfd_asymbol_name (*relpp[i]->sym_ptr_ptr),
 					keep_specific_htab))
 	      *w_relpp++ = relpp[i];
+		else
+		{
+			/* Don't keep the symbol, but keep the reloc unless it is a relative reloc that is
+			* requested by the user to be removed. For now, we also don't discard the reloc if
+			* its targeting a different section. This can happen for relocs in the .rodata
+			* segment that refering to the .text segment. AmigaOS will possibly split these
+			* up.
+			*/
+			if (!strip_unneeded_rel_relocs || !relpp [i]->howto->pc_relative || sec->index != osection->index)
+			{
+			temp_relpp [temp_relcount] = relpp[i];
+			temp_relpp [temp_relcount]->addend = bfd_asymbol_value(*relpp [i]->sym_ptr_ptr)
+								- sec->vma
+								+ relpp[i]->addend;
+			temp_relpp [temp_relcount]->sym_ptr_ptr = sec->symbol_ptr_ptr;
+			temp_relcount++;
+			}
+		}
 	  relcount = w_relpp - relpp;
 	  *w_relpp = 0;
 	}
@@ -4755,6 +4799,9 @@ strip_main (int argc, char *argv[])
 	case OPTION_STRIP_UNNEEDED:
 	  strip_symbols = STRIP_UNNEEDED;
 	  break;
+	case OPTION_STRIP_UNNEEED_REL_RELOCS:
+	  strip_unneeded_rel_relocs = 1;
+	  break;	  
 	case 'K':
 	  add_specific_symbol (optarg, keep_specific_htab);
 	  break;
@@ -4839,6 +4886,11 @@ strip_main (int argc, char *argv[])
     print_version ("strip");
 
   default_deterministic ();
+
+  // ML: TODO: For amiga
+  add_specific_symbol("__amigaos4__", keep_specific_htab);
+  add_specific_symbol("_start", keep_specific_htab);
+  add_specific_symbol("_SDA_BASE_", keep_specific_htab);
 
   /* Default is to strip all symbols.  */
   if (strip_symbols == STRIP_UNDEF
@@ -5913,6 +5965,12 @@ copy_main (int argc, char *argv[])
 
   if (interleave && copy_byte == -1)
     fatal (_("interleave start byte must be set with --byte"));
+
+  // ML: TOOD: For akigaSO
+  add_specific_symbol("__amigappc__", keep_specific_htab);
+  add_specific_symbol("__amigaos4__", keep_specific_htab);
+  add_specific_symbol("_start", keep_specific_htab);
+  add_specific_symbol("_SDA_BASE_", keep_specific_htab);
 
   if (copy_byte >= interleave)
     fatal (_("byte number must be less than interleave"));

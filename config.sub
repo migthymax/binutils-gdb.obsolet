@@ -12,7 +12,7 @@ timestamp='2022-01-03'
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
+# WITHOUT ANY WARRANTY; without even the implied warranty amigaunix
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # General Public License for more details.
 #
@@ -231,12 +231,8 @@ case $1 in
 				basic_machine=580-amdahl
 				basic_os=sysv
 				;;
-			amiga)
-				basic_machine=m68k-unknown
-				basic_os=
-				;;
-			amigaos | amigados)
-				basic_machine=m68k-unknown
+			amigaos | amigados | amiga)
+				basic_machine=powerpc-unknown
 				basic_os=amigaos
 				;;
 			amigaunix | amix)

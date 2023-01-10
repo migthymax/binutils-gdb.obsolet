@@ -570,6 +570,7 @@ do
     pj_elf32_vec)		 tb="$tb elf32-pj.lo elf32.lo $elf" ;;
     pj_elf32_le_vec)		 tb="$tb elf32-pj.lo elf32.lo $elf" ;;
     powerpc_boot_vec)		 tb="$tb ppcboot.lo" ;;
+    powerpc_elf32_amigaos_vec)	tb="$tb elf32-ppc.lo elf32.lo $elf" ;;
     powerpc_elf32_vec)		 tb="$tb elf32-ppc.lo elf-vxworks.lo elf32.lo $elf" ;;
     powerpc_elf32_le_vec)	 tb="$tb elf32-ppc.lo elf-vxworks.lo elf32.lo $elf" ;;
     powerpc_elf32_fbsd_vec)	 tb="$tb elf32-ppc.lo elf-vxworks.lo elf32.lo $elf" ;;

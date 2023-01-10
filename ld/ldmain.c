@@ -496,12 +496,19 @@ main (int argc, char **argv)
 
   lang_process ();
 
-  /* Print error messages for any missing symbols, for any warning
+    /* Print error messages for any missing symbols, for any warning
+     symbols, and possibly multiple definitions.  */
+#ifdef __amigaos4__
+  /* Make all files executable, even relocatable files */
+    link_info.output_bfd->flags |= EXEC_P;
+#else
+	/* Print error messages for any missing symbols, for any warning
      symbols, and possibly multiple definitions.  */
   if (bfd_link_relocatable (&link_info))
     link_info.output_bfd->flags &= ~EXEC_P;
   else
     link_info.output_bfd->flags |= EXEC_P;
+#endif
 
   flagword flags = 0;
   switch (config.compress_debug)

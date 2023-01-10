@@ -1125,6 +1125,10 @@ case "${targ}" in
 	targ_cflags=-DSMALL_ARCHIVE;;
     esac
     ;;
+  powerpc-*-amiga*)
+    targ_defvec=powerpc_elf32_amigaos_vec
+    targ_selvecs="powerpc_elf32_vec"
+    ;;	
 #ifdef BFD64
   powerpc64-*-aix*)
     targ_defvec=rs6000_xcoff64_vec

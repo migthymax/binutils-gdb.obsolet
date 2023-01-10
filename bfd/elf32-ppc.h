@@ -23,7 +23,8 @@ enum ppc_elf_plt_type
   PLT_UNSET,
   PLT_OLD,
   PLT_NEW,
-  PLT_VXWORKS
+  PLT_VXWORKS,
+  PLT_AMIGAOS
 };
 
 /* Various options passed from the linker to bfd backend.  */

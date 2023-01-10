@@ -3840,6 +3840,13 @@ typedef struct bfd_sym_chain ldlang_undef_chain_list_type;
 void
 ldlang_add_undef (const char *const name, bool cmdline ATTRIBUTE_UNUSED)
 {
+#if 1
+  /* This is a quick ugly hak of getting around the problem
+   * with -use-dynld being passed to the linker
+   */
+  if (strcmp(name, "se-dynld") == 0)
+    return;
+#endif	
   ldlang_undef_chain_list_type *new_undef;
 
   new_undef = stat_alloc (sizeof (*new_undef));

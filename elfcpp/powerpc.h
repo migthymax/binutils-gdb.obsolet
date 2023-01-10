@@ -211,6 +211,12 @@ enum
   R_PPC64_GOT_TPREL_PCREL34 = 150,
   R_PPC64_GOT_DTPREL_PCREL34 = 151,
 
+  /* ML: TODO: AmigaOS ELF base relative addressing data secion via r2 relocation (compile option -mbaserel)*/
+  R_PPC_AMIGAOS_BREL = 210,
+  R_PPC_AMIGAOS_BREL_LO = 211,
+  R_PPC_AMIGAOS_BREL_HI = 212,
+  R_PPC_AMIGAOS_BREL_HA = 213,
+  
   R_PPC_VLE_REL8 = 216,
   R_PPC_VLE_REL15 = 217,
   R_PPC_VLE_REL24 = 218,

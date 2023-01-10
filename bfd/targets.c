@@ -847,6 +847,7 @@ extern const bfd_target pj_elf32_vec;
 extern const bfd_target pj_elf32_le_vec;
 extern const bfd_target plugin_vec;
 extern const bfd_target powerpc_boot_vec;
+extern const bfd_target powerpc_elf32_amigaos_vec;
 extern const bfd_target powerpc_elf32_vec;
 extern const bfd_target powerpc_elf32_le_vec;
 extern const bfd_target powerpc_elf32_fbsd_vec;
@@ -1231,6 +1232,7 @@ static const bfd_target * const _bfd_target_vector[] =
 	&pj_elf32_le_vec,
 
 	&powerpc_boot_vec,
+	&powerpc_elf32_amigaos_vec,
 	&powerpc_elf32_vec,
 	&powerpc_elf32_le_vec,
 	&powerpc_elf32_fbsd_vec,

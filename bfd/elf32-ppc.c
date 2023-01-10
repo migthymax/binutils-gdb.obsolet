@@ -22,6 +22,7 @@
 /* The assembler should generate a full set of section symbols even
    when they appear unused.  The linux kernel build tool recordmcount
    needs them.  */
+// ML: TODO: Keep for Amiga?
 #define TARGET_KEEP_UNUSED_SECTION_SYMBOLS true
 
 #include "sysdep.h"
@@ -31,12 +32,14 @@
 #include "libbfd.h"
 #include "elf-bfd.h"
 #include "elf/ppc.h"
+#include "elf/amigaos.h"
 #include "elf32-ppc.h"
 #include "elf-vxworks.h"
 #include "dwarf2.h"
 #include "opcode/ppc.h"
 
 /* All users of this file have bfd_octets_per_byte (abfd, sec) == 1.  */
+// ML: TODO: Keep for Amiga? Fist for amigao
 #define OCTETS_PER_BYTE(ABFD, SEC) 1
 
 typedef enum split16_format_type
@@ -574,6 +577,23 @@ static reloc_howto_type ppc_elf_howto_raw[] = {
   /* Relocation not handled: R_PPC_EMB_RELST_HA */
   /* Relocation not handled: R_PPC_EMB_BIT_FLD */
 
+  /* A standard 32 bit base relative relocation.  */
+  HOW (R_PPC_AMIGAOS_BREL, 2, 32, 0xffffffff, 0, false, bitfield,
+  	   bfd_elf_generic_reloc),
+
+  /* A 16 bit base relative relocation without overflow.  */
+  HOW (R_PPC_AMIGAOS_BREL_LO, 1, 16, 0xffff, 0, false, dont,
+  	   bfd_elf_generic_reloc),
+
+  /* The high order 16 bits of a base relative address.  */
+  HOW (R_PPC_AMIGAOS_BREL_HI, 1, 16, 0xffff, 0, false, dont,
+  	   bfd_elf_generic_reloc),
+
+  /* The high order 16 bits of a base relative address, plus 1 if the contents
+     of the low 16 bits, treated as a signed number, is negative.  */
+  HOW (R_PPC_AMIGAOS_BREL_HA, 1, 16, 0xffff, 16, false, dont,
+  	   bfd_elf_generic_reloc),
+
   /* PC relative relocation against either _SDA_BASE_ or _SDA2_BASE_, filling
      in the 16 bit signed offset from the appropriate base, and filling in the
      register field with the appropriate register (0, 2, or 13).  */
@@ -822,7 +842,11 @@ ppc_elf_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
     case BFD_RELOC_PPC_EMB_RELST_HA:	r = R_PPC_EMB_RELST_HA;		break;
     case BFD_RELOC_PPC_EMB_BIT_FLD:	r = R_PPC_EMB_BIT_FLD;		break;
     case BFD_RELOC_PPC_EMB_RELSDA:	r = R_PPC_EMB_RELSDA;		break;
-    case BFD_RELOC_PPC_VLE_REL8:	r = R_PPC_VLE_REL8;		break;
+	case BFD_RELOC_PPC_AMIGAOS_BREL:	r = R_PPC_AMIGAOS_BREL;		break;
+    case BFD_RELOC_PPC_AMIGAOS_BREL_LO:	r = R_PPC_AMIGAOS_BREL_LO;	break;
+    case BFD_RELOC_PPC_AMIGAOS_BREL_HI:	r = R_PPC_AMIGAOS_BREL_HI;	break;
+    case BFD_RELOC_PPC_AMIGAOS_BREL_HA:	r = R_PPC_AMIGAOS_BREL_HA;	break;
+	case BFD_RELOC_PPC_VLE_REL8:	r = R_PPC_VLE_REL8;		break;
     case BFD_RELOC_PPC_VLE_REL15:	r = R_PPC_VLE_REL15;		break;
     case BFD_RELOC_PPC_VLE_REL24:	r = R_PPC_VLE_REL24;		break;
     case BFD_RELOC_PPC_VLE_LO16A:	r = R_PPC_VLE_LO16A;		break;
@@ -2335,7 +2359,16 @@ ppc_elf_create_got (bfd *abfd, struct bfd_link_info *info)
     return false;
 
   htab = ppc_elf_hash_table (info);
-  if (htab->elf.target_os != is_vxworks)
+  if (htab->elf.target_os == is_amigaos )
+	{
+	  /* The powerpc .got has a blrl instruction in it.  Mark it
+	 executable.  */
+      flagword flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS
+			| SEC_IN_MEMORY | SEC_LINKER_CREATED);
+      if (!bfd_set_section_flags (htab->elf.sgot, flags))
+	return false;
+	}
+  else if (htab->elf.target_os != is_vxworks)
     {
       /* The powerpc .got has a blrl instruction in it.  Mark it
 	 executable.  */
@@ -2501,6 +2534,8 @@ ppc_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 
   s = htab->elf.splt;
   flags = SEC_ALLOC | SEC_CODE | SEC_LINKER_CREATED;
+  if (htab->plt_type == PLT_AMIGAOS)
+     flags |= SEC_READONLY;
   if (htab->plt_type == PLT_VXWORKS)
     /* The VxWorks PLT is a loaded section with contents.  */
     flags |= SEC_HAS_CONTENTS | SEC_LOAD | SEC_READONLY;
@@ -3154,6 +3189,13 @@ ppc_elf_check_relocs (bfd *abfd,
 	      ppc_elf_hash_entry (h)->has_sda_refs = true;
 	      h->non_got_ref = true;
 	    }
+	  break;
+
+	  /* These don't work with a GOT */
+	case R_PPC_AMIGAOS_BREL:
+	case R_PPC_AMIGAOS_BREL_HI:
+	case R_PPC_AMIGAOS_BREL_LO:
+	case R_PPC_AMIGAOS_BREL_HA:
 	  break;
 
 	case R_PPC_VLE_REL8:
@@ -4910,6 +4952,7 @@ ppc_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
   if (ELIMINATE_COPY_RELOCS
       && !ppc_elf_hash_entry (h)->has_sda_refs
       && htab->elf.target_os != is_vxworks
+	  && htab->elf.target_os != is_amigaos
       && !h->def_regular
       && !alias_readonly_dynrelocs (h))
     return true;
@@ -5896,6 +5939,11 @@ ppc_elf_size_dynamic_sections (bfd *output_bfd,
       if (!_bfd_elf_maybe_vxworks_add_dynamic_tags (output_bfd, info,
 						    relocs))
 	return false;
+
+	  /* AmigaOS: Flag it as a version 2 dynamic binary */
+      if ( htab->plt_type == PLT_AMIGAOS
+	  && !add_dynamic_entry (DT_AMIGAOS_DYNVERSION, 2) )
+        return false;
 
       if (htab->plt_type == PLT_NEW
 	  && htab->glink != NULL
@@ -6980,6 +7028,7 @@ ppc_elf_relocate_section (bfd *output_bfd,
   Elf_Internal_Rela *relend;
   Elf_Internal_Rela outrel;
   asection *got2;
+  asection *data_section = NULL;
   bfd_vma *local_got_offsets;
   bool ret = true;
   bfd_vma d_offset = (bfd_big_endian (input_bfd) ? 2 : 0);
@@ -8050,6 +8099,51 @@ ppc_elf_relocate_section (bfd *output_bfd,
 	case R_PPC_UADDR32:
 	case R_PPC_UADDR16:
 	  goto dodyn;
+
+	case R_PPC_AMIGAOS_BREL:
+	case R_PPC_AMIGAOS_BREL_HI:
+	case R_PPC_AMIGAOS_BREL_LO:
+	case R_PPC_AMIGAOS_BREL_HA:
+	{
+		if (data_section == NULL)
+			data_section = bfd_get_section_by_name (output_bfd, ".data");
+		if (data_section != NULL)
+		{
+			if (sec)
+			{
+				const char *name = bfd_section_name (sec->output_section);
+				if (strcmp (name, ".sdata") != 0
+					&& strcmp (name, ".sbss") != 0
+					&& strcmp (name, ".data") != 0
+					&& strcmp (name, ".bss") != 0
+					&& strncmp (name, ".ctors", 6) != 0
+					&& strncmp (name, ".dtors", 6) != 0)
+				{
+					_bfd_error_handler
+						/* xgettext:c-format */
+						(_("%pB: the target (%s) of a %s relocation is in the wrong output section (%s)"),
+							input_bfd,
+							sym_name,
+							howto->name,
+							name);
+				}			
+			}
+
+			addend -= data_section->output_section->vma;
+
+			if (r_type == R_PPC_AMIGAOS_BREL_HA)
+			addend += ((relocation + addend) & 0x8000) << 1;
+		}
+		else 
+		{
+			_bfd_error_handler
+				/* xgettext:c-format */
+				(_("%pB: the target (%s) has not '.data' section"),
+					input_bfd,
+					sym_name);
+		}
+	}
+	break;
 
 	case R_PPC_VLE_REL8:
 	case R_PPC_VLE_REL15:
@@ -10433,6 +10527,63 @@ ppc_elf_finish_dynamic_sections (bfd *output_bfd,
 #define elf_backend_action_discarded		ppc_elf_action_discarded
 #define elf_backend_init_index_section		_bfd_elf_init_1_index_section
 #define elf_backend_lookup_section_flags_hook	ppc_elf_lookup_section_flags
+
+#include "elf32-target.h"
+
+/* ML: TODO: AmigaOS Target */
+
+#undef  TARGET_LITTLE_SYM
+#undef  TARGET_LITTLE_NAME
+
+#undef  TARGET_BIG_SYM
+#define TARGET_BIG_SYM  powerpc_elf32_amigaos_vec
+#undef  TARGET_BIG_NAME
+#define TARGET_BIG_NAME "elf32-powerpc-amigaos"
+
+#undef ELF_TARGET_OS
+#define ELF_TARGET_OS		is_amigaos
+
+/* Like ppc_elf_link_hash_table_create, but overrides
+   appropriately for AmigaOS.  */
+static struct bfd_link_hash_table *
+ppc_elf_amigaos_link_hash_table_create (bfd *abfd)
+{
+  struct bfd_link_hash_table *ret;
+
+  ret = ppc_elf_link_hash_table_create (abfd);
+  if (ret)
+    {
+      struct ppc_elf_link_hash_table *htab
+	= (struct ppc_elf_link_hash_table *)ret;
+      htab->plt_type = PLT_AMIGAOS;
+    }
+  return ret;
+}
+
+/* If we have .sbss2 or .PPC.EMB.sbss0 output sections, we
+   need to bump up the number of section headers.  */
+
+static int
+ppc_elf_amigaos_additional_program_headers (bfd *abfd,
+				    struct bfd_link_info *info ATTRIBUTE_UNUSED)
+{
+  int ret = 1;
+  ret += ppc_elf_additional_program_headers (abfd,info);
+
+  return ret;
+}
+
+
+#undef bfd_elf32_bfd_link_hash_table_create
+#define bfd_elf32_bfd_link_hash_table_create \
+  ppc_elf_amigaos_link_hash_table_create
+
+#undef elf_backend_additional_program_headers
+#define elf_backend_additional_program_headers \
+  ppc_elf_amigaos_additional_program_headers
+
+#undef elf32_bed
+#define elf32_bed	elf32_powerpc_amigaos_bed
 
 #include "elf32-target.h"
 

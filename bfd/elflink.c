@@ -10533,6 +10533,8 @@ elf_link_output_extsym (struct bfd_hash_entry *bh, void *data)
     default:
     case bfd_link_hash_new:
     case bfd_link_hash_warning:
+	  // ML: TODO: really needed, or just  cosmetic?
+	  (*_bfd_error_handler)(_("Unexpected type (%d) of symbol %s"), h->root.type, h->root.root.string);
       abort ();
       return false;
 

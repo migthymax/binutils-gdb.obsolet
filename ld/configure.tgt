@@ -669,6 +669,10 @@ pjl*-*-*)		targ_emul=pjlelf
 pj*-*-*)		targ_emul=pjelf
 			targ_extra_ofiles=ldelfgen.o
 			;;
+powerpc-*-amigaos*)
+			targ_emul=amigaos
+			targ_extra_emuls=elf32ppc
+			;;			
 powerpc-*-freebsd* | powerpc-*-kfreebsd*-gnu)
 			targ_emul=elf32ppc_fbsd
 			targ_extra_emuls="elf32ppc elf32ppcsim"
@@ -1128,6 +1132,10 @@ i[03-9x]86-*-cygwin* | x86_64-*-cygwin*)
   ;;
 
 *-*-netbsd*)
+  ;;
+
+powerpc-*-amigaos*)
+  NATIVE_LIB_DIRS='/gcc/local/lib /gcc/lib'
   ;;
 
 alpha*-*-*)
