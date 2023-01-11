@@ -158,6 +158,7 @@ ALL_EMULATION_SOURCES = \
 	eaixrs6.c \
 	ealpha.c \
 	ealphavms.c \
+	eamigaos.c \
 	earcelf.c \
 	earclinux.c \
 	earclinux_nps.c \
@@ -336,8 +337,6 @@ ALL_EMULATION_SOURCES = \
 	ens32knbsd.c \
 	epc532macha.c \
 	epdp11.c \
-	eppcamiga.c \
-	eppcamiga_bss.c \
 	epjelf.c \
 	epjlelf.c \
 	eppcmacos.c \
@@ -656,6 +655,7 @@ $(ALL_EMULATION_SOURCES) $(ALL_64_EMULATION_SOURCES): $(GEN_DEPENDS)
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eaixrs6.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ealpha.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ealphavms.Pc@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eamigaos.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earcelf.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earclinux.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earclinux_nps.Pc@am__quote@
@@ -836,8 +836,6 @@ $(ALL_EMULATION_SOURCES) $(ALL_64_EMULATION_SOURCES): $(GEN_DEPENDS)
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/epdp11.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/epjelf.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/epjlelf.Pc@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eppcamiga.Pc@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eppcamiga_bss.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eppcmacos.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/epruelf.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/escore3_elf.Pc@am__quote@
