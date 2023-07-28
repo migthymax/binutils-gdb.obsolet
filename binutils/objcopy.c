@@ -4403,10 +4403,11 @@ copy_relocations_in_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
 	    }
 	}
 
-    /* Never, ever, strip reloc data on the Amiga! */
     if (strip_symbols == STRIP_ALL &&
-	  bfd_get_flavour(obfd) != bfd_target_amiga_flavour)
-	{
+      /* Never, ever, strip reloc data on the Amiga! */
+      !(bfd_get_flavour(obfd) == bfd_target_elf_flavour &&
+      get_elf_backend_data(obfd)->target_os == is_amigaos))
+  {
 	  /* Remove relocations which are not in
 	     keep_strip_specific_list.  */
 	  arelent **w_relpp;
@@ -4420,24 +4421,6 @@ copy_relocations_in_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
 		if( is_specified_symbol (bfd_asymbol_name (*relpp[i]->sym_ptr_ptr),
 					keep_specific_htab))
 	      *w_relpp++ = relpp[i];
-		else
-		{
-			/* Don't keep the symbol, but keep the reloc unless it is a relative reloc that is
-			* requested by the user to be removed. For now, we also don't discard the reloc if
-			* its targeting a different section. This can happen for relocs in the .rodata
-			* segment that refering to the .text segment. AmigaOS will possibly split these
-			* up.
-			*/
-			if (!strip_unneeded_rel_relocs || !relpp [i]->howto->pc_relative || sec->index != osection->index)
-			{
-			temp_relpp [temp_relcount] = relpp[i];
-			temp_relpp [temp_relcount]->addend = bfd_asymbol_value(*relpp [i]->sym_ptr_ptr)
-								- sec->vma
-								+ relpp[i]->addend;
-			temp_relpp [temp_relcount]->sym_ptr_ptr = sec->symbol_ptr_ptr;
-			temp_relcount++;
-			}
-		}
 	  relcount = w_relpp - relpp;
 	  *w_relpp = 0;
 	}

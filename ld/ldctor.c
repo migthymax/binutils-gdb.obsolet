@@ -32,6 +32,7 @@
 #include <ldgram.h>
 #include "ldmain.h"
 #include "ldctor.h"
+#include "elf-bfd.h"
 
 /* The list of statements needed to handle constructors.  These are
    invoked by the command CONSTRUCTORS in the linker script.  */
@@ -259,7 +260,8 @@ ldctor_build_sets (void)
 	 /* dgv -- libnix v1.1 uses absolute sets that are also explicitly
 	 defined in the library so that the sets need to be build even
 	 if the symbol is defined */
-      if ((bfd_get_flavour (link_info.output_bfd) != bfd_target_amiga_flavour) &&
+	  if (!(bfd_get_flavour (link_info.output_bfd) == bfd_target_elf_flavour &&
+		get_elf_backend_data (link_info.output_bfd)->target_os == is_amigaos) &&
         (p->h->type == bfd_link_hash_defined
 	    || p->h->type == bfd_link_hash_defweak))
 	continue;
@@ -373,7 +375,8 @@ ldctor_build_sets (void)
 	  /* dgv -- on the amiga, we want the constructors to be relocateable
 	     objects. However, this should be arranged somewhere else (FIXME) */
 	  if (bfd_link_relocatable (&link_info) ||
-	      (bfd_get_flavour (link_info.output_bfd) == bfd_target_amiga_flavour &&
+		  (bfd_get_flavour (link_info.output_bfd) == bfd_target_elf_flavour &&
+           get_elf_backend_data (link_info.output_bfd)->target_os == is_amigaos &&
 	       e->section != bfd_abs_section_ptr))
 	    lang_add_reloc (p->reloc, howto, e->section, e->name,
 			    exp_intop (e->value));
