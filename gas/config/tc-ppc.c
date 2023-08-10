@@ -1548,7 +1548,7 @@ ppc_target_format (void)
 #endif
 #ifdef OBJ_ELF
 # if TE_AMIGAOS
-  return "elf32-amigaos";
+  return "elf32-powerpc-amigaos";
 # else
 #  ifdef TE_FreeBSD
   return (ppc_obj64 ? "elf64-powerpc-freebsd" : "elf32-powerpc-freebsd");

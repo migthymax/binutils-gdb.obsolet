@@ -5,6 +5,7 @@
 *.rej
 
 cross-build/
+dist/
 
 *~
 .#*
