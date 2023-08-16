@@ -1655,13 +1655,12 @@ filter_symbols (bfd *abfd, bfd *obfd, asymbol **osyms,
 	  bfd_set_asymbol_name (sym, n);
 	  name = n;
 	}
-
-      if (strip_symbols == STRIP_ALL)
-		if (strcmp(name, "_start") == 0 || strcmp(name, "__amigaos4__") == 0 || strcmp(name, "_SDA_BASE_") == 0)
-          keep = true;
-        else
-          keep = false;
-      else if ((flags & BSF_KEEP) != 0		/* Used in relocation.  */
+      if( (strip_symbols == STRIP_ALL) && 
+		 /* Never, ever, strip everthing on the Amiga, keep reloc data, which hopefully is handled in the other else cases! */
+     	 !(bfd_get_flavour(obfd) == bfd_target_elf_flavour &&
+     	 get_elf_backend_data(obfd)->target_os == is_amigaos))
+		keep = false;
+	  else if ((flags & BSF_KEEP) != 0		/* Used in relocation.  */
 	       || ((flags & BSF_SECTION_SYM) != 0
 		   && ((*bfd_asymbol_section (sym)->symbol_ptr_ptr)->flags
 		       & BSF_KEEP) != 0))
