@@ -4424,7 +4424,7 @@ copy_relocations_in_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
 	    /* PR 17512: file: 9e907e0c.  */
 	    if (relpp[i]->sym_ptr_ptr
 		/* PR 20096 */
-		&& *relpp[i]->sym_ptr_ptr )
+		&& *relpp[i]->sym_ptr_ptr ) {
 		if( is_specified_symbol (bfd_asymbol_name (*relpp[i]->sym_ptr_ptr),
 					keep_specific_htab))
 	      *w_relpp++ = relpp[i];
