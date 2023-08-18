@@ -670,8 +670,8 @@ pj*-*-*)		targ_emul=pjelf
 			targ_extra_ofiles=ldelfgen.o
 			;;
 powerpc-*-amigaos*)
-			targ_emul=amigaos
-			targ_extra_emuls=elf32ppc
+			targ_emul=elf32ppcamigaos
+			targ_extra_emuls="elf32ppc elf32ppcsim"
 			;;			
 powerpc-*-freebsd* | powerpc-*-kfreebsd*-gnu)
 			targ_emul=elf32ppc_fbsd
