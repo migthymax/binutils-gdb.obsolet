@@ -1660,7 +1660,7 @@ filter_symbols (bfd *abfd, bfd *obfd, asymbol **osyms,
 		  keep = false;
 		 /* Never, ever, strip everthing on the Amiga, keep global symbols, needed by OS 
 		 	_start: 		Entry point of executable, isn't fixed on ppc-amigaos, so OS needs to knwo where to enter
-			__amigaos4__: 	Maker symbol to identify that ELF file is for ppc-amigaos, because no offcial value has been assigned to ELF heder field for ppc-amigaos
+			__amigaos4__: 	Maker symbol to identify that ELF file is for ppc-amigaos, because no offcial value has been assigned to ELF heder field OS/ABI for ppc-amigaos
 			_SDA_BASE_:		If small data model ist used, the symbol is needed ....?????
 		 */
      	 if( (bfd_get_flavour(obfd) == bfd_target_elf_flavour && get_elf_backend_data(obfd)->target_os == is_amigaos))
@@ -4424,20 +4424,23 @@ copy_relocations_in_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
 	    /* PR 17512: file: 9e907e0c.  */
 	    if (relpp[i]->sym_ptr_ptr
 		/* PR 20096 */
-		&& *relpp[i]->sym_ptr_ptr )
+		&& *relpp[i]->sym_ptr_ptr ) {
+		asection *sec = (*(relpp[i]->sym_ptr_ptr))->section;
+
 		if( is_specified_symbol (bfd_asymbol_name (*relpp[i]->sym_ptr_ptr),
 					keep_specific_htab))
 	      *w_relpp++ = relpp[i];
 		/* Never, ever, strip all? reloc data on the Amiga! */
 		else if( bfd_get_flavour(obfd) == bfd_target_elf_flavour && get_elf_backend_data(obfd)->target_os == is_amigaos)
 		{
-			if (!strip_unneeded_rel_relocs || !relpp [i]->howto->pc_relative || isection->index != osection->index)
+			if (!strip_unneeded_rel_relocs || !relpp [i]->howto->pc_relative || sec->index != osection->index)
 			{
-				relpp[i]->addend = bfd_asymbol_value(*relpp [i]->sym_ptr_ptr) - isection->vma + relpp[i]->addend;
-				relpp[i]->sym_ptr_ptr = isection->symbol_ptr_ptr;
+				relpp[i]->addend = bfd_asymbol_value(*relpp [i]->sym_ptr_ptr) - sec->vma + relpp[i]->addend;
+				relpp[i]->sym_ptr_ptr = sec->symbol_ptr_ptr;
 				*w_relpp++ = relpp[i];
 			}
 		}  
+		}
 	  relcount = w_relpp - relpp;
 	  *w_relpp = 0;
 	}
