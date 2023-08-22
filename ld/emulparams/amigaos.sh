@@ -26,5 +26,3 @@ PLT=".plt          ${RELOCATING-0} :  { *(.plt) }"
 # GOTPLT="${PLT}"
 OTHER_TEXT_SECTIONS="*(.glink)"
 EXTRA_EM_FILE=ppc32elf
-
-DYNAMIC_LINK=false
