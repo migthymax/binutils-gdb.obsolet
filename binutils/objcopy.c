@@ -4425,15 +4425,15 @@ copy_relocations_in_section (bfd *ibfd, sec_ptr isection, void *obfdarg)
 	    if (relpp[i]->sym_ptr_ptr
 		/* PR 20096 */
 		&& *relpp[i]->sym_ptr_ptr ) {
-		asection *sec = (*(relpp[i]->sym_ptr_ptr))->section;
-
 		if( is_specified_symbol (bfd_asymbol_name (*relpp[i]->sym_ptr_ptr),
 					keep_specific_htab))
 	      *w_relpp++ = relpp[i];
 		/* Never, ever, strip all? reloc data on the Amiga! */
 		else if( bfd_get_flavour(obfd) == bfd_target_elf_flavour && get_elf_backend_data(obfd)->target_os == is_amigaos)
 		{
-			if (!strip_unneeded_rel_relocs || !relpp [i]->howto->pc_relative || sec->index != osection->index)
+			asection *sec = (*(relpp[i]->sym_ptr_ptr))->section;
+
+			if (!strip_unneeded_rel_relocs || !relpp [i]->howto->pc_relative || isection->index != osection->index)
 			{
 				relpp[i]->addend = bfd_asymbol_value(*relpp [i]->sym_ptr_ptr) - sec->vma + relpp[i]->addend;
 				relpp[i]->sym_ptr_ptr = sec->symbol_ptr_ptr;

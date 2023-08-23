@@ -499,7 +499,6 @@ main (int argc, char **argv)
     /* Print error messages for any missing symbols, for any warning
      symbols, and possibly multiple definitions.  */
 #ifdef __amigaos4__
-printf( "%s:%d:Make all stuff excuatbel for aos4!\n", __FILE__, __LINE__ );
   /* Make all files executable, even relocatable files */
     link_info.output_bfd->flags |= EXEC_P;
 #else
