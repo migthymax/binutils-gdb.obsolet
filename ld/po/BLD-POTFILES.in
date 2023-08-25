@@ -152,7 +152,6 @@ eelf32ppchaiku.c
 eelf32ppclinux.c
 eelf32ppcnto.c
 eelf32ppcsim.c
-eelf32ppcamigaos.c
 eelf32ppcvxworks.c
 eelf32ppcwindiss.c
 eelf32rl78.c

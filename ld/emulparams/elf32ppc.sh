@@ -1,6 +1,6 @@
 # If you change this file, please also look at files which source this one:
 # elf32lppcnto.sh elf32lppc.sh elf32ppclinux.sh elf32ppcnto.sh
-# elf32ppcsim.sh elf32ppcamigaos.sh
+# elf32ppcsim.sh
 
 source_sh ${srcdir}/emulparams/elf32ppccommon.sh
 source_sh ${srcdir}/emulparams/plt_unwind.sh

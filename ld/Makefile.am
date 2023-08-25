@@ -158,6 +158,7 @@ ALL_EMULATION_SOURCES = \
 	eaixrs6.c \
 	ealpha.c \
 	ealphavms.c \
+	eamigaos.c \
 	earcelf.c \
 	earclinux.c \
 	earclinux_nps.c \
@@ -261,7 +262,6 @@ ALL_EMULATION_SOURCES = \
 	eelf32ppclinux.c \
 	eelf32ppcnto.c \
 	eelf32ppcsim.c \
-	eelf32ppcamigaos.c \
 	eelf32ppcvxworks.c \
 	eelf32ppcwindiss.c \
 	eelf32rl78.c \
@@ -655,6 +655,7 @@ $(ALL_EMULATION_SOURCES) $(ALL_64_EMULATION_SOURCES): $(GEN_DEPENDS)
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eaixrs6.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ealpha.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ealphavms.Pc@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eamigaos.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earcelf.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earclinux.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/earclinux_nps.Pc@am__quote@
@@ -758,7 +759,6 @@ $(ALL_EMULATION_SOURCES) $(ALL_64_EMULATION_SOURCES): $(GEN_DEPENDS)
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf32ppclinux.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf32ppcnto.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf32ppcsim.Pc@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf32ppcamigaos.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf32ppcvxworks.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf32ppcwindiss.Pc@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf32rl78.Pc@am__quote@
