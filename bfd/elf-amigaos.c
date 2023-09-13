@@ -31,6 +31,10 @@
 bool
 _bfd_elf_amigaos_add_dynamic_tags (struct bfd_link_info *info)
 {
+#ifdef DEBUG
+		printf ("Target amigaos-pcc needs addtional marker symbol DT_AMIGAOS_DYNVERSION to mark version used.\n"); 
+#endif
+
 	struct elf_link_hash_table *htab = elf_hash_table (info);
 	
 	return  htab->target_os != is_amigaos || _bfd_elf_add_dynamic_entry (info,DT_AMIGAOS_DYNVERSION, 2);

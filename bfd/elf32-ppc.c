@@ -10542,22 +10542,66 @@ ppc_elf_finish_dynamic_sections (bfd *output_bfd,
 #undef ELF_TARGET_OS
 #define ELF_TARGET_OS		is_amigaos
 
-/* If we have .sbss2 or .PPC.EMB.sbss0 output sections, we
-   need to bump up the number of section headers.  */
+/* The name of the readonly data section.  */
+#define RDATA_SECTION_NAME ".rodata"
+
+/* If we have .rodata section we need to bump the
+programm headers, so that it is in it own segment. */ 
 
 static int
-ppc_elf_amigaos_additional_program_headers (bfd *abfd,
-				    struct bfd_link_info *info ATTRIBUTE_UNUSED)
+ppc_elf_amigaos_additional_program_headers (
+	bfd *abfd,
+	struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
-  int ret = 1;
-  ret += ppc_elf_additional_program_headers (abfd,info);
+	int ret = ppc_elf_additional_program_headers(abfd,info);
 
-  return ret;
+	/* See if we need a RDATA_SECTION_NAME segment.  */
+	if (bfd_get_section_by_name (abfd, RDATA_SECTION_NAME))
+	{
+#ifdef DEBUG
+		printf ("Target amigaos-pcc needs addtional programm header, because .rodata section is present, thus we add 1 to %d\n",ret); 
+#endif
+		++ret;
+	}
+
+	return ret;
 }
 
+static bool
+ppc_elf_amigaos_modify_segment_map (
+	bfd *abfd,
+	struct bfd_link_info *info ATTRIBUTE_UNUSED)
+{
+	/* If there is a .rodata section, we need a own segment for it.  */
+	asection *roSection = bfd_get_section_by_name (abfd, RDATA_SECTION_NAME);
+	if( roSection != NULL ) 
+	{
+#ifdef DEBUG
+		printf ("Target amigaos-pcc needs .rodata section in aseparate segment from .text and .plt\n"); 
+#endif
+		struct elf_segment_map *roSegment = bfd_alloc (abfd,sizeof (struct elf_segment_map));
+		if( roSegment == NULL ) 
+			return false;
+
+		roSegment->p_type = PT_LOAD;
+		roSegment->p_flags = PF_R;
+		roSegment->count = 1;
+		roSegment->sections[0] = roSection;
+
+		struct elf_segment_map *lastSegment = elf_seg_map (abfd);
+		for( ;lastSegment->next != NULL;lastSegment = lastSegment->next );
+		lastSegment->next = roSegment;
+	}
+
+	return true;
+}
+
+
 #undef elf_backend_additional_program_headers
-#define elf_backend_additional_program_headers \
-  ppc_elf_amigaos_additional_program_headers
+#define elf_backend_additional_program_headers	ppc_elf_amigaos_additional_program_headers
+
+#undef elf_backend_modify_segment_map
+#define elf_backend_modify_segment_map			ppc_elf_amigaos_modify_segment_map
 
 #undef elf32_bed
 #define elf32_bed	elf32_powerpc_amigaos_bed
