@@ -659,6 +659,7 @@ ALL_EMULATION_SOURCES = \
 	eaixrs6.c \
 	ealpha.c \
 	ealphavms.c \
+	eamigaos.c \
 	earcelf.c \
 	earclinux.c \
 	earclinux_nps.c \
