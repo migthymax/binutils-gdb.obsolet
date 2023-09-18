@@ -10588,9 +10588,10 @@ ppc_elf_amigaos_modify_segment_map (
 		roSegment->count = 1;
 		roSegment->sections[0] = roSection;
 
-		struct elf_segment_map *lastSegment = elf_seg_map (abfd);
-		for( ;lastSegment->next != NULL;lastSegment = lastSegment->next );
-		lastSegment->next = roSegment;
+		struct elf_segment_map *firstSegment = elf_seg_map (abfd);
+		struct elf_segment_map *nextSegment = firstSegment->next;
+		firstSegment->next = roSegment;
+		roSegment->next = nextSegment;
 	}
 
 	return true;
