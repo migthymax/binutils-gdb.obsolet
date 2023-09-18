@@ -10588,9 +10588,27 @@ ppc_elf_amigaos_modify_segment_map (
 		roSegment->count = 1;
 		roSegment->sections[0] = roSection;
 
-		struct elf_segment_map *firstSegment = elf_seg_map (abfd);
-		struct elf_segment_map *nextSegment = firstSegment->next;
-		firstSegment->next = roSegment;
+		struct elf_segment_map *segments = elf_seg_map (abfd);
+		struct elf_segment_map *prevSegment = segments;
+		struct elf_segment_map *nextSegment = NULL;
+		do 
+		{
+			for( unsigned int index = 0;index < segments->count;index++ )
+			{
+				if( strcmp ( segments->sections[index]->name, ".text") == 0 ) 
+				{
+					nextSegment = segments->next;
+					segments->next = NULL;
+
+					break;
+				} 
+			}
+
+			prevSegment = segments;
+			segments = segments->next;
+		} while( segments != NULL && nextSegment == NULL );
+
+		prevSegment->next = roSegment;
 		roSegment->next = nextSegment;
 	}
 
