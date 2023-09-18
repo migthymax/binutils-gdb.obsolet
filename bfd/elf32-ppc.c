@@ -10564,6 +10564,15 @@ ppc_elf_amigaos_additional_program_headers (
 		++ret;
 	}
 
+	/* See if we need a RDATA_SECTION_NAME segment.  */
+	if (bfd_get_section_by_name (abfd, ".__newlib_version"))
+	{
+#ifdef DEBUG
+		printf ("Target amigaos-pcc needs addtional programm header, because .__newlib_version section is present, thus we add 1 to %d\n",ret); 
+#endif
+		++ret;
+	}
+
 	return ret;
 }
 
@@ -10610,8 +10619,25 @@ ppc_elf_amigaos_modify_segment_map (
 
 		prevSegment->next = roSegment;
 		roSegment->next = nextSegment;
-	}
 
+		/* If there is a .__newlib_version section, we need a own segment for it after the rodata sgemnet.  */
+		asection *newlibVersionSection = bfd_get_section_by_name (abfd, ".__newlib_version");
+		if( newlibVersionSection != NULL ) 
+		{
+			struct elf_segment_map *newlibVersionSegment = bfd_alloc (abfd,sizeof (struct elf_segment_map));
+			if( newlibVersionSegment == NULL ) 
+				return false;
+
+			newlibVersionSegment->p_type = PT_LOAD;
+			newlibVersionSegment->p_flags = PF_R | PF_X;
+			newlibVersionSegment->count = 1;
+			newlibVersionSegment->sections[0] = newlibVersionSection;
+
+			newlibVersionSegment->next = roSegment->next;
+			roSegment->next = newlibVersionSegment;
+		}
+	}
+	
 	return true;
 }
 
