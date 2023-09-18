@@ -1,7 +1,7 @@
 . ${srcdir}/emulparams/elf32ppccommon.sh
 . ${srcdir}/emulparams/plt_unwind.sh
 
-TEMPLATE_NAME=elf
+TEMPLATE_NAME=amigaos
 SCRIPT_NAME=amigaos
 OUTPUT_FORMAT="elf32-powerpc-amigaos"
 MAXPAGESIZE="CONSTANT (MAXPAGESIZE)"
