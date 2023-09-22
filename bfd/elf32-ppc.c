@@ -10579,15 +10579,24 @@ ppc_elf_amigaos_modify_segment_map (
 #ifdef DEBUG
 		printf ("Target amigaos-pcc needs .rodata section in aseparate segment from .text and .plt\n"); 
 #endif
-		struct elf_segment_map *roSegment = bfd_alloc (abfd,sizeof (struct elf_segment_map));
+		struct elf_segment_map *roSegment = bfd_zalloc (abfd,sizeof (struct elf_segment_map));
 		if( roSegment == NULL ) 
 			return false;
 
 		roSegment->p_type = PT_LOAD;
 		roSegment->p_flags = PF_R;
+		roSegment->p_flags_valid = true;
 		roSegment->count = 1;
 		roSegment->sections[0] = roSection;
 
+		struct elf_segment_map **segments = &elf_seg_map (abfd);
+		while ( *segments != NULL )
+		{
+	    	segments = &(*segments)->next;
+		}
+		*segments = roSegment;
+		
+		/*
 		struct elf_segment_map *segments = elf_seg_map (abfd);
 		struct elf_segment_map *prevSegment = segments;
 		struct elf_segment_map *nextSegment = NULL;
@@ -10610,6 +10619,7 @@ ppc_elf_amigaos_modify_segment_map (
 
 		prevSegment->next = roSegment;
 		roSegment->next = nextSegment;
+		*/
 	}
 
 	return true;
