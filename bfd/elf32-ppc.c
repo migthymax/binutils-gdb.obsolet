@@ -10548,7 +10548,7 @@ ppc_elf_finish_dynamic_sections (bfd *output_bfd,
 /* If we have .rodata section we need to bump the
 programm headers, so that it is in it own segment. */ 
 
-/*
+
 static int
 ppc_elf_amigaos_additional_program_headers (
 	bfd *abfd,
@@ -10556,7 +10556,7 @@ ppc_elf_amigaos_additional_program_headers (
 {
 	int ret = ppc_elf_additional_program_headers(abfd,info);
 
-	/ * See if we need a RDATA_SECTION_NAME segment.  * /
+	/* See if we need a RDATA_SECTION_NAME segment.  */
 	if (bfd_get_section_by_name (abfd, RDATA_SECTION_NAME))
 	{
 #ifdef DEBUG
@@ -10564,16 +10564,6 @@ ppc_elf_amigaos_additional_program_headers (
 #endif
 		++ret;
 	}
-
-	/ * See if we need a .__newlib_version section segment.  
-	if (bfd_get_section_by_name (abfd, ".__newlib_version"))
-	{
-#ifdef DEBUG
-		printf ("Target amigaos-pcc needs addtional programm header, because .__newlib_version section is present, thus we add 1 to %d\n",ret); 
-#endif
-		++ret;
-	}
-	* /
 
 	return ret;
 }
@@ -10583,89 +10573,61 @@ ppc_elf_amigaos_modify_segment_map (
 	bfd *abfd,
 	struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
-	/ * If there is a .rodata section, we need a own segment for it.  * /
+	/* If there is a .rodata section, we need a own segment for it.  */
 	asection *roSection = bfd_get_section_by_name (abfd, RDATA_SECTION_NAME);
 	if( roSection != NULL ) 
 	{
 #ifdef DEBUG
 		printf ("Target amigaos-pcc needs .rodata section in aseparate segment from .text and .plt\n"); 
 #endif
-		struct elf_segment_map *roSegment = bfd_zalloc (abfd,sizeof (struct elf_segment_map));
-		if( roSegment == NULL ) 
-			return false;
-
-		struct elf_segment_map *segments = elf_seg_map (abfd);
-		do 
+		for( struct elf_segment_map *segment = elf_seg_map (abfd);segment != NULL;segment = segment->next ) 
 		{
-			for( unsigned int index = 0;index < segments->count;index++ )
+			if( segment->p_type == PT_LOAD && segment->count > 1 )
 			{
-				if( strcmp ( segments->sections[index]->name, ".rodata") == 0 ) 
+				for( unsigned int index = 0;index < segment->count;index++ )
 				{
-					segments->p_paddr_valid = 0;
-					segments->p_size_valid = 0;
-					break;
-				} 
+					if( segment->sections[index] == roSection ) 
+					{
+#ifdef DEBUG
+						printf ("Segment found for .rodata at index %d of %d sections\n",index,segment->count); 
+#endif
+				
+						if( index + 1 < segment->count )
+						{
+							struct elf_segment_map *nextSegment = bfd_zalloc (abfd,sizeof (struct elf_segment_map) + ( (segment->count - ( index + 2 )) * sizeof ( segment->sections[0]) ) );
+							if( nextSegment == NULL ) 
+								return false;
+						
+							nextSegment->count = segment->count - (index + 1);
+							memcpy (nextSegment->sections, segment->sections + index + 1,nextSegment->count * sizeof (segment->sections[0]));
+							nextSegment->p_type = PT_LOAD;
+							nextSegment->p_flags = PF_R;
+							nextSegment->next = segment->next;
+							segment->next = nextSegment;
+						}
+						
+						segment->count = 1;
+
+						if( index != 0 )
+						{
+							segment->count = index;
+							struct elf_segment_map *nextSegment = bfd_zalloc (abfd,sizeof (struct elf_segment_map));
+							if( nextSegment == NULL )
+								return false;
+
+							nextSegment->p_type = PT_LOAD;
+							nextSegment->p_flags = PF_R;
+							nextSegment->count = 1;
+							nextSegment->sections[0] = roSection;
+							nextSegment->next = segment->next;
+							segment->next = nextSegment;
+						}
+
+						break;
+					} 
+				}		
 			}
-
-			segments = segments->next;
-		} while( segments != NULL );
-
-		roSegment->p_type = PT_LOAD;
-		roSegment->p_flags = PF_R;
-		roSegment->p_flags_valid = true;
-		roSegment->count = 1;
-		roSegment->sections[0] = roSection;
-
-		struct elf_segment_map **segments2 = &elf_seg_map (abfd);
-		while ( *segments2 != NULL )
-		{
-	    	segments2 = &(*segments2)->next;
 		}
-		*segments2 = roSegment;
-		
-
-		/ * If there is a .__newlib_version section, we need a own segment for it after the rodata sgemnet.  
-		asection *newlibVersionSection = bfd_get_section_by_name (abfd, ".__newlib_version");
-		if( newlibVersionSection != NULL ) 
-		{
-			struct elf_segment_map *newlibVersionSegment = bfd_alloc (abfd,sizeof (struct elf_segment_map));
-			if( newlibVersionSegment == NULL ) 
-				return false;
-
-			newlibVersionSegment->p_type = PT_LOAD;
-			newlibVersionSegment->p_flags = PF_R | PF_X;
-			newlibVersionSegment->count = 1;
-			newlibVersionSegment->sections[0] = newlibVersionSection;
-
-			newlibVersionSegment->next = roSegment->next;
-			roSegment->next = newlibVersionSegment;
-		}
-		* /
-
-		/ *
-		struct elf_segment_map *segments = elf_seg_map (abfd);
-		struct elf_segment_map *prevSegment = segments;
-		struct elf_segment_map *nextSegment = NULL;
-		do 
-		{
-			for( unsigned int index = 0;index < segments->count;index++ )
-			{
-				if( strcmp ( segments->sections[index]->name, ".text") == 0 ) 
-				{
-					nextSegment = segments->next;
-					segments->next = NULL;
-
-					break;
-				} 
-			}
-
-			prevSegment = segments;
-			segments = segments->next;
-		} while( segments != NULL && nextSegment == NULL );
-
-		prevSegment->next = roSegment;
-		roSegment->next = nextSegment;
-		* /
 	}
 
 	return ppc_elf_modify_segment_map( abfd,info );
@@ -10676,7 +10638,7 @@ ppc_elf_amigaos_modify_segment_map (
 
 #undef elf_backend_modify_segment_map
 #define elf_backend_modify_segment_map			ppc_elf_amigaos_modify_segment_map
-*/
+
 #undef elf32_bed
 #define elf32_bed	elf32_powerpc_amigaos_bed
 
