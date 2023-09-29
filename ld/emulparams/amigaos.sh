@@ -2,10 +2,12 @@
 . ${srcdir}/emulparams/plt_unwind.sh
 
 TEMPLATE_NAME=elf
+EXTRA_EM_FILE=ppc32elf
 SCRIPT_NAME=amigaos
 OUTPUT_FORMAT="elf32-powerpc-amigaos"
 MAXPAGESIZE="CONSTANT (MAXPAGESIZE)"
 COMMONPAGESIZE="CONSTANT (COMMONPAGESIZE)"
+DATA_SEGMENT_ALIGN="ALIGN(${SEGMENT_SIZE})"
 ALIGNMENT=16
 ARCH=powerpc
 MACHINE=
@@ -25,4 +27,3 @@ GOT=".got          ${RELOCATING-0} : SPECIAL { *(.got) }"
 PLT=".plt          ${RELOCATING-0} :  { *(.plt) }"
 # GOTPLT="${PLT}"
 OTHER_TEXT_SECTIONS="*(.glink)"
-EXTRA_EM_FILE=ppc32elf

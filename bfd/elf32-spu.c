@@ -5241,46 +5241,45 @@ spu_elf_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
   if (info == NULL)
     return true;
 
-  toe = bfd_get_section_by_name (abfd, ".toe");
-  for (m = elf_seg_map (abfd); m != NULL; m = m->next)
-    if (m->p_type == PT_LOAD && m->count > 1)
-      for (i = 0; i < m->count; i++)
-	if ((s = m->sections[i]) == toe
-	    || spu_elf_section_data (s)->u.o.ovl_index != 0)
-	  {
-	    struct elf_segment_map *m2;
-	    bfd_vma amt;
+	toe = bfd_get_section_by_name (abfd, ".toe");
+	for (m = elf_seg_map (abfd); m != NULL; m = m->next)	
+		if (m->p_type == PT_LOAD && m->count > 1)
+			for (i = 0; i < m->count; i++)
+				if ((s = m->sections[i]) == toe || spu_elf_section_data (s)->u.o.ovl_index != 0)
+				{
+	    			struct elf_segment_map *m2;
+	    			bfd_vma amt;
 
-	    if (i + 1 < m->count)
-	      {
-		amt = sizeof (struct elf_segment_map);
-		amt += (m->count - (i + 2)) * sizeof (m->sections[0]);
-		m2 = bfd_zalloc (abfd, amt);
-		if (m2 == NULL)
-		  return false;
-		m2->count = m->count - (i + 1);
-		memcpy (m2->sections, m->sections + i + 1,
-			m2->count * sizeof (m->sections[0]));
-		m2->p_type = PT_LOAD;
-		m2->next = m->next;
-		m->next = m2;
-	      }
-	    m->count = 1;
-	    if (i != 0)
-	      {
-		m->count = i;
-		amt = sizeof (struct elf_segment_map);
-		m2 = bfd_zalloc (abfd, amt);
-		if (m2 == NULL)
-		  return false;
-		m2->p_type = PT_LOAD;
-		m2->count = 1;
-		m2->sections[0] = s;
-		m2->next = m->next;
-		m->next = m2;
-	      }
-	    break;
-	  }
+					if (i + 1 < m->count)
+					{
+						amt = sizeof (struct elf_segment_map);
+						amt += (m->count - (i + 2)) * sizeof (m->sections[0]);
+						m2 = bfd_zalloc (abfd, amt);
+						if (m2 == NULL)
+							return false;
+						m2->count = m->count - (i + 1);
+						memcpy (m2->sections, m->sections + i + 1,
+						m2->count * sizeof (m->sections[0]));
+						m2->p_type = PT_LOAD;
+						m2->next = m->next;
+						m->next = m2;
+					}
+					m->count = 1;
+					if (i != 0)
+					{
+						m->count = i;
+						amt = sizeof (struct elf_segment_map);
+						m2 = bfd_zalloc (abfd, amt);
+						if (m2 == NULL)
+							return false;
+						m2->p_type = PT_LOAD;
+						m2->count = 1;
+						m2->sections[0] = s;
+						m2->next = m->next;
+						m->next = m2;
+					}
+					break;
+				}
 
 
   /* Some SPU ELF loaders ignore the PF_OVERLAY flag and just load all

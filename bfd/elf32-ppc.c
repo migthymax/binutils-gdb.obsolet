@@ -34,6 +34,7 @@
 #include "elf/ppc.h"
 #include "elf/amigaos.h"
 #include "elf32-ppc.h"
+#include "elf-amigaos.h"
 #include "elf-vxworks.h"
 #include "dwarf2.h"
 #include "opcode/ppc.h"
@@ -2534,7 +2535,7 @@ ppc_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 
   s = htab->elf.splt;
   flags = SEC_ALLOC | SEC_CODE | SEC_LINKER_CREATED;
-  if (htab->plt_type == PLT_AMIGAOS)
+  if (htab->elf.target_os == is_amigaos )
      flags |= SEC_READONLY;
   if (htab->plt_type == PLT_VXWORKS)
     /* The VxWorks PLT is a loaded section with contents.  */
@@ -5940,10 +5941,8 @@ ppc_elf_size_dynamic_sections (bfd *output_bfd,
 						    relocs))
 	return false;
 
-	  /* AmigaOS: Flag it as a version 2 dynamic binary */
-      if ( htab->plt_type == PLT_AMIGAOS
-	  && !add_dynamic_entry (DT_AMIGAOS_DYNVERSION, 2) )
-        return false;
+      if (!_bfd_elf_amigaos_add_dynamic_tags (info))
+		return false;
 
       if (htab->plt_type == PLT_NEW
 	  && htab->glink != NULL
@@ -10543,44 +10542,102 @@ ppc_elf_finish_dynamic_sections (bfd *output_bfd,
 #undef ELF_TARGET_OS
 #define ELF_TARGET_OS		is_amigaos
 
-/* Like ppc_elf_link_hash_table_create, but overrides
-   appropriately for AmigaOS.  */
-static struct bfd_link_hash_table *
-ppc_elf_amigaos_link_hash_table_create (bfd *abfd)
-{
-  struct bfd_link_hash_table *ret;
+/* The name of the readonly data section.  */
+#define RDATA_SECTION_NAME ".rodata"
 
-  ret = ppc_elf_link_hash_table_create (abfd);
-  if (ret)
-    {
-      struct ppc_elf_link_hash_table *htab
-	= (struct ppc_elf_link_hash_table *)ret;
-      htab->plt_type = PLT_AMIGAOS;
-    }
-  return ret;
-}
+/* If we have .rodata section we need to bump the
+programm headers, so that it is in it own segment. */ 
 
-/* If we have .sbss2 or .PPC.EMB.sbss0 output sections, we
-   need to bump up the number of section headers.  */
 
 static int
-ppc_elf_amigaos_additional_program_headers (bfd *abfd,
-				    struct bfd_link_info *info ATTRIBUTE_UNUSED)
+ppc_elf_amigaos_additional_program_headers (
+	bfd *abfd,
+	struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
-  int ret = 1;
-  ret += ppc_elf_additional_program_headers (abfd,info);
+	int ret = ppc_elf_additional_program_headers(abfd,info);
 
-  return ret;
+	/* See if we need a RDATA_SECTION_NAME segment.  */
+	if (bfd_get_section_by_name (abfd, RDATA_SECTION_NAME))
+	{
+#ifdef DEBUG
+		printf ("Target amigaos-pcc needs addtional programm header, because .rodata section is present, thus we add 1 to %d\n",ret); 
+#endif
+		++ret;
+	}
+
+	return ret;
 }
 
+static bool
+ppc_elf_amigaos_modify_segment_map (
+	bfd *abfd,
+	struct bfd_link_info *info ATTRIBUTE_UNUSED)
+{
+	/* If there is a .rodata section, we need a own segment for it.  */
+	asection *roSection = bfd_get_section_by_name (abfd, RDATA_SECTION_NAME);
+	if( roSection != NULL ) 
+	{
+#ifdef DEBUG
+		printf ("Target amigaos-pcc needs .rodata section in aseparate segment from .text and .plt\n"); 
+#endif
+		for( struct elf_segment_map *segment = elf_seg_map (abfd);segment != NULL;segment = segment->next ) 
+		{
+			if( segment->p_type == PT_LOAD && segment->count > 1 )
+			{
+				for( unsigned int index = 0;index < segment->count;index++ )
+				{
+					if( segment->sections[index] == roSection ) 
+					{
+#ifdef DEBUG
+						printf ("Segment found for .rodata at index %d of %d sections\n",index,segment->count); 
+#endif
+				
+						if( index + 1 < segment->count )
+						{
+							struct elf_segment_map *nextSegment = bfd_zalloc (abfd,sizeof (struct elf_segment_map) + ( (segment->count - ( index + 2 )) * sizeof ( segment->sections[0]) ) );
+							if( nextSegment == NULL ) 
+								return false;
+						
+							nextSegment->count = segment->count - (index + 1);
+							memcpy (nextSegment->sections, segment->sections + index + 1,nextSegment->count * sizeof (segment->sections[0]));
+							nextSegment->p_type = PT_LOAD;
+							nextSegment->p_flags = PF_R;
+							nextSegment->next = segment->next;
+							segment->next = nextSegment;
+						}
+						
+						segment->count = 1;
 
-#undef bfd_elf32_bfd_link_hash_table_create
-#define bfd_elf32_bfd_link_hash_table_create \
-  ppc_elf_amigaos_link_hash_table_create
+						if( index != 0 )
+						{
+							segment->count = index;
+							struct elf_segment_map *nextSegment = bfd_zalloc (abfd,sizeof (struct elf_segment_map));
+							if( nextSegment == NULL )
+								return false;
+
+							nextSegment->p_type = PT_LOAD;
+							nextSegment->p_flags = PF_R;
+							nextSegment->count = 1;
+							nextSegment->sections[0] = roSection;
+							nextSegment->next = segment->next;
+							segment->next = nextSegment;
+						}
+
+						break;
+					} 
+				}		
+			}
+		}
+	}
+
+	return ppc_elf_modify_segment_map( abfd,info );
+}
 
 #undef elf_backend_additional_program_headers
-#define elf_backend_additional_program_headers \
-  ppc_elf_amigaos_additional_program_headers
+#define elf_backend_additional_program_headers	ppc_elf_amigaos_additional_program_headers
+
+#undef elf_backend_modify_segment_map
+#define elf_backend_modify_segment_map			ppc_elf_amigaos_modify_segment_map
 
 #undef elf32_bed
 #define elf32_bed	elf32_powerpc_amigaos_bed

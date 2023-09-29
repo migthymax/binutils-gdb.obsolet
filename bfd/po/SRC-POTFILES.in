@@ -147,6 +147,8 @@ elf-properties.c
 elf-s390.h
 elf-sframe.c
 elf-strtab.c
+elf-amigaos.c
+elf-amigaos.h
 elf-vxworks.c
 elf-vxworks.h
 elf.c
