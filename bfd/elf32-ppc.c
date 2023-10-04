@@ -10633,11 +10633,47 @@ ppc_elf_amigaos_modify_segment_map (
 	return ppc_elf_modify_segment_map( abfd,info );
 }
 
+static bool
+ppc_elf_amigaos_finish_dynamic_symbol(
+	bfd *output_bfd,
+	struct bfd_link_info *info,
+	struct elf_link_hash_entry *hashEntry,
+	Elf_Internal_Sym *sym)
+{
+#ifdef DEBUG
+	printf ("Target amigaos-pcc needs reloc R_PPC_JMP_SLOT/... having none zero value\n"); 
+#endif
+ 
+	if( ! hashEntry->def_regular || ( hashEntry->type == STT_GNU_IFUNC && !bfd_link_pic( info ) ) )
+	{
+		for( struct plt_entry *pltEntry = hashEntry->plt.plist;pltEntry != NULL;pltEntry = pltEntry->next )
+		{
+			if( pltEntry->plt.offset != (bfd_vma)-1 ) 
+			{	
+				if( ! hashEntry->def_regular && ! hashEntry->pointer_equality_needed )
+	    		{
+					/* THF: This is peculiar. The compiler generates a R_PPC_JMP_SLOT for externally referenced
+					 * symbols imported from libc.so. Relocation in elf.library requires the symbol to have it's .plt
+					 * stub value, but the linker specifically clears the value to 0, resulting in run-time
+					 * errors when the binary tries to call libc functions.
+					 */	
+					hashEntry->pointer_equality_needed = 1;
+				}
+			}
+		}
+	}
+
+  return ppc_elf_finish_dynamic_symbol( output_bfd,info,hashEntry,sym );
+}
+
 #undef elf_backend_additional_program_headers
 #define elf_backend_additional_program_headers	ppc_elf_amigaos_additional_program_headers
 
 #undef elf_backend_modify_segment_map
 #define elf_backend_modify_segment_map			ppc_elf_amigaos_modify_segment_map
+
+#undef elf_backend_finish_dynamic_symbol
+#define elf_backend_finish_dynamic_symbol	ppc_elf_amigaos_finish_dynamic_symbol
 
 #undef elf32_bed
 #define elf32_bed	elf32_powerpc_amigaos_bed
