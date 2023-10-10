@@ -8117,6 +8117,7 @@ ppc_elf_relocate_section (bfd *output_bfd,
 					&& strcmp (name, ".bss") != 0
 					&& strncmp (name, ".ctors", 6) != 0
 					&& strncmp (name, ".dtors", 6) != 0)
+					// AMIGAOS ML: for .init/.fini, we need to add it here?
 				{
 					_bfd_error_handler
 						/* xgettext:c-format */
