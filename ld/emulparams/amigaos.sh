@@ -27,3 +27,4 @@ GOT=".got          ${RELOCATING-0} : SPECIAL { *(.got) }"
 PLT=".plt          ${RELOCATING-0} :  { *(.plt) }"
 # GOTPLT="${PLT}"
 OTHER_TEXT_SECTIONS="*(.glink)"
+ENABLE_INITFINI_ARRAY=no
